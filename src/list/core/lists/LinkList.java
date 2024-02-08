@@ -3,8 +3,12 @@ package list.core.lists;
 import list.core.GBList;
 import list.core.util.Node;
 
+import java.util.Iterator;
+import java.util.NoSuchElementException;
+
 public class LinkList<T> implements GBList<T> {
     private Node<T> head;
+    private int size;
 
     public void add(T elem) {
         Node<T> newNode = new Node<>();
@@ -16,10 +20,16 @@ public class LinkList<T> implements GBList<T> {
             head.previous = newNode;
         }
         head = newNode;
+        size++;
     }
 
+    public boolean isValidIndex(int index) {
+        return index >= 0 && index < size();
+    }
+
+
     public void remove(int index) {
-        if (index < 0 || index >= size()) {
+        if (!isValidIndex(index)) {
             throw new IndexOutOfBoundsException("Index: " + index + ", Size: " + size());
         }
 
@@ -28,16 +38,19 @@ public class LinkList<T> implements GBList<T> {
             head.previous = null;
         } else {
             Node<T> current = head;
-            for (int i = 0; i < index - 1; i++) {
+            for (int i = 0; i != index; i++) {
                 current = current.next;
             }
-            current.next.previous.next = current.next;
-            current.next = null;
+            if (current.next != null)
+                current.next.previous = current.previous;
+            current.previous.next = current.next;
+
         }
+        size--;
     }
 
     public T get(int index) {
-        if (index < 0 || index >= size()) {
+        if (!isValidIndex(index)) {
             throw new IndexOutOfBoundsException("Index: " + index + ", Size: " + size());
         }
         Node<T> current = head;
@@ -48,20 +61,35 @@ public class LinkList<T> implements GBList<T> {
     }
 
     public int size() {
-        Node<T> current = head;
-        int size = 0;
-        while (current != null) {
-            size++;
-            current = current.next;
-        }
         return size;
     }
 
     @Override
-    public java.util.Iterator<T> iterator() {
-        return null;
-    }
+    public Iterator<T> iterator() {
+        return new Iterator<T>() {
+            private Node<T> current = head;
 
+            @Override
+            public boolean hasNext() {
+                return current != null;
+            }
+
+            @Override
+            public T next() {
+                if (!hasNext()) {
+                    throw new NoSuchElementException();
+                }
+                T value = current.value;
+                current = current.next;
+                return value;
+            }
+
+            @Override
+            public void remove() {
+                throw new UnsupportedOperationException();
+            }
+        };
+    }
     @Override
     public String toString() {
         StringBuilder builder = new StringBuilder("[");
